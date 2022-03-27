@@ -1,7 +1,7 @@
 import pytest
 
 from exapi.exchanges.binance.exceptions import BinanceInvalidSymbolError
-from exapi.exchanges.binance.rest import BinanceREST
+from exapi.exchanges.binance.rest import BinanceREST, BinanceRESTWithoutCredentials
 
 
 @pytest.mark.asyncio
