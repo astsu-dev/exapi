@@ -1,13 +1,20 @@
 from types import TracebackType
-from typing import Any, Iterable, Literal, Type, cast, overload
+from typing import Any, DefaultDict, Iterable, Literal, Type, cast, overload
 
 import aiohttp
 
 from exapi.base.rest import BaseExchangeREST
 from exapi.exchanges.binance.enums import BinanceOrderTypeEnum
-from exapi.exchanges.binance.exceptions import BinanceInvalidSymbolError, BinanceError
+from exapi.exchanges.binance.exceptions import (
+    BinanceAuthError,
+    BinanceBadPrecisionError,
+    BinanceBadRecvWindowError,
+    BinanceInvalidSymbolError,
+    BinanceError,
+)
 from exapi.exchanges.binance.models import BinanceCredentials
 from exapi.exchanges.binance.typedefs import (
+    BinanceAccountInfo,
     BinanceAckOrderResponse,
     BinanceExchangeInfo,
     BinanceFullOrderResponse,
@@ -443,6 +450,71 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
         )
         response = await self._send_request(request)
         result: BinanceExchangeInfo = response
+
+        return result
+
+    async def get_account_info(
+        self, credentials: BinanceCredentials, recv_window: int | None = None
+    ) -> BinanceAccountInfo:
+        """Returns account info - balances, fees, permissions.
+
+        >>> import asyncio
+        >>> from exapi.exchanges.binance.rest import BinanceRESTWithoutCredentials
+        >>> from exapi.exchanges.binance.typedefs import BinanceAccountInfo
+        >>>
+        >>> async def get_account_info() -> BinanceAccountInfo:
+        ...     credentials = BinanceCredentials("API_KEY", "API_SECRET")
+        ...     async with BinanceRESTWithoutCredentials() as rest:
+        ...         return await rest.get_account_info(credentials)
+        ...
+        >>> asyncio.run(get_account_info())
+        {
+            "makerCommission": 15,
+            "takerCommission": 15,
+            "buyerCommission": 0,
+            "sellerCommission": 0,
+            "canTrade": True,
+            "canWithdraw": True,
+            "canDeposit": True,
+            "updateTime": 123456789,
+            "accountType": "SPOT",
+            "balances": [
+                {
+                    "asset": "BTC",
+                    "free": "4723846.89208129",
+                    "locked": "0.00000000"
+                },
+                {
+                    "asset": "LTC",
+                    "free": "4763368.68006011",
+                    "locked": "0.00000000"
+                }
+            ],
+            "permissions": [
+                "SPOT"
+            ]
+        }
+
+        Args:
+            credentials: api keys.
+            recv_window: the value cannot be greater than 60000.
+
+        Returns:
+            Account info.
+        """
+
+        params: dict[str, str] = {}
+        if recv_window is not None:
+            params["recvWindow"] = str(recv_window)
+
+        request = Request(
+            method="GET",
+            base_url=self._base_url,
+            path="/api/v3/account",
+            params=params,
+        )
+        response = await self._send_private_request(request, credentials)
+        result: BinanceAccountInfo = response
 
         return result
 
@@ -1048,11 +1120,22 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
             body=result,
         )
 
+        codes_to_exceptions: DefaultDict[int, Type[BinanceError]] = DefaultDict(
+            lambda: BinanceError
+        )
+        codes_to_exceptions.update(
+            {
+                -1002: BinanceAuthError,
+                -1022: BinanceAuthError,
+                -1111: BinanceBadPrecisionError,
+                -1121: BinanceInvalidSymbolError,
+                -1131: BinanceBadRecvWindowError,
+            }
+        )
+
         code: int = result["code"]
-        if code == -1121:
-            raise BinanceInvalidSymbolError(request=request, response=response_info)
-        else:
-            raise BinanceError(request=request, response=response_info)
+        Error = codes_to_exceptions[code]
+        raise Error(request=request, response=response_info)
 
     async def _send_private_request(
         self, request: Request, credentials: BinanceCredentials
@@ -1454,6 +1537,59 @@ class BinanceREST:
             symbols=symbols,  # type: ignore
         )
 
+    async def get_account_info(
+        self, recv_window: int | None = None
+    ) -> BinanceAccountInfo:
+        """Returns account info - balances, fees, permissions.
+
+        >>> import asyncio
+        >>> from exapi.exchanges.binance.rest import BinanceREST
+        >>> from exapi.exchanges.binance.typedefs import BinanceAccountInfo
+        >>>
+        >>> async def get_account_info() -> BinanceAccountInfo:
+        ...     async with BinanceREST("API_KEY", "API_SECRET") as rest:
+        ...         return await rest.get_account_info()
+        ...
+        >>> asyncio.run(get_account_info())
+        {
+            "makerCommission": 15,
+            "takerCommission": 15,
+            "buyerCommission": 0,
+            "sellerCommission": 0,
+            "canTrade": True,
+            "canWithdraw": True,
+            "canDeposit": True,
+            "updateTime": 123456789,
+            "accountType": "SPOT",
+            "balances": [
+                {
+                    "asset": "BTC",
+                    "free": "4723846.89208129",
+                    "locked": "0.00000000"
+                },
+                {
+                    "asset": "LTC",
+                    "free": "4763368.68006011",
+                    "locked": "0.00000000"
+                }
+            ],
+            "permissions": [
+                "SPOT"
+            ]
+        }
+
+        Args:
+            recv_window: the value cannot be greater than 60000.
+
+        Returns:
+            Account info.
+        """
+
+        credentials = self._credentials
+        return await self._client.get_account_info(
+            credentials=credentials, recv_window=recv_window
+        )
+
     @overload
     async def new_order(
         self,
@@ -1819,7 +1955,7 @@ class BinanceREST:
         >>> from exapi.exchanges.binance.typedefs import BinanceFullOrderResponse, BinanceOrderResponseType
         >>>
         >>> async def new_order(resp_type: BinanceOrderResponseType | None = None) -> BinanceFullOrderResponse:
-        ...     async with BinanceREST(api_key="API_KEY", api_secret="API_SECRET") as rest:
+        ...     async with BinanceREST("API_KEY", "API_SECRET") as rest:
         ...         return await rest.new_order(
         ...             symbol="BTCUSDT",
         ...             side="BUY",
@@ -1901,7 +2037,6 @@ class BinanceREST:
         """
 
         credentials = self._credentials
-
         return await self._client.new_order(
             symbol=symbol,
             side=side,

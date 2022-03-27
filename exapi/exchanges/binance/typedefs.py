@@ -22,6 +22,7 @@ BinanceOrderStatus = Literal[
 BinanceOrderResponseType = Literal["ACK", "RESULT", "FULL"]
 BinanceTimeInForce = Literal["GTC", "IOC", "FOK"]
 BinancePermission = Literal["SPOT", "MARGIN", "LEVERAGED", "TRD_GRP_002"]
+BinanceAccountType = Literal["SPOT"]  # TODO: extend possible values
 
 
 class BinanceRateLimit(TypedDict):
@@ -203,3 +204,23 @@ class BinanceFilledOrder(TypedDict):
 
 class BinanceFullOrderResponse(BinanceResultOrderResponse):
     fills: list[BinanceFilledOrder]
+
+
+class BinanceAccountBalance(TypedDict):
+    asset: str
+    free: str
+    locked: str
+
+
+class BinanceAccountInfo(TypedDict):
+    makerCommission: int
+    takerCommission: int
+    buyerCommission: int
+    sellerCommission: int
+    canTrade: bool
+    canWithdraw: bool
+    canDeposit: bool
+    updateTime: int
+    accountType: BinanceAccountType
+    balances: list[BinanceAccountBalance]
+    permissions: list[BinancePermission]
