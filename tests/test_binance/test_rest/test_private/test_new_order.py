@@ -1,29 +1,15 @@
-import os
-import pprint
 from unittest import mock
 
 import pytest
-from dotenv import load_dotenv
 
-from exapi.exchanges.binance.enums import (
-    BinanceOrderSideEnum,
-    BinanceOrderTypeEnum,
-    BinanceTimeInForceEnum,
-)
-from exapi.exchanges.binance.exceptions import BinanceError
 from exapi.exchanges.binance.models import BinanceCredentials
 from exapi.exchanges.binance.rest import BinanceRESTWithoutCredentials
 
-load_dotenv()
-
-credentials = BinanceCredentials(
-    api_key=os.getenv("BINANCE_TEST_API_KEY", ""),
-    api_secret=os.getenv("BINANCE_TEST_API_SECRET", ""),
-)
-
 
 @pytest.mark.asyncio
-async def test_binance_rest_without_credentials_new_market_order_argument_checking() -> None:
+async def test_binance_rest_without_credentials_new_market_order_argument_checking(
+    credentials: BinanceCredentials,
+) -> None:
     _send_private_request = mock.AsyncMock()
     _send_private_request.return_value = None
     async with BinanceRESTWithoutCredentials() as rest:
@@ -107,7 +93,9 @@ async def test_binance_rest_without_credentials_new_market_order_argument_checki
 
 
 @pytest.mark.asyncio
-async def test_binance_rest_without_credentials_new_limit_order_argument_checking() -> None:
+async def test_binance_rest_without_credentials_new_limit_order_argument_checking(
+    credentials: BinanceCredentials,
+) -> None:
     _send_private_request = mock.AsyncMock()
     _send_private_request.return_value = None
     async with BinanceRESTWithoutCredentials() as rest:
@@ -204,7 +192,7 @@ async def test_binance_rest_without_credentials_new_limit_order_argument_checkin
 @pytest.mark.parametrize("order_type", (("STOP_LOSS", "TAKE_PROFIT")))
 @pytest.mark.asyncio
 async def test_binance_rest_without_credentials_new_stop_loss_and_take_profit_order_argument_checking(
-    order_type: str,
+    order_type: str, credentials: BinanceCredentials
 ) -> None:
     _send_private_request = mock.AsyncMock()
     _send_private_request.return_value = None
@@ -297,7 +285,7 @@ async def test_binance_rest_without_credentials_new_stop_loss_and_take_profit_or
 @pytest.mark.parametrize("order_type", (("STOP_LOSS_LIMIT", "TAKE_PROFIT_LIMIT")))
 @pytest.mark.asyncio
 async def test_binance_rest_without_credentials_new_stop_loss_limit_and_take_profit_limit_order_argument_checking(
-    order_type: str,
+    order_type: str, credentials: BinanceCredentials
 ) -> None:
     _send_private_request = mock.AsyncMock()
     _send_private_request.return_value = None
@@ -388,7 +376,9 @@ async def test_binance_rest_without_credentials_new_stop_loss_limit_and_take_pro
 
 
 @pytest.mark.asyncio
-async def test_binance_rest_without_credentials_new_limit_maker_order_argument_checking() -> None:
+async def test_binance_rest_without_credentials_new_limit_maker_order_argument_checking(
+    credentials: BinanceCredentials,
+) -> None:
     _send_private_request = mock.AsyncMock()
     _send_private_request.return_value = None
     async with BinanceRESTWithoutCredentials() as rest:
@@ -465,54 +455,3 @@ async def test_binance_rest_without_credentials_new_limit_maker_order_argument_c
                 quote_order_qty="100",
                 credentials=credentials,
             )
-
-
-def error_handler(fn):
-    async def wrapper(*args, **kwargs):
-        try:
-            return await fn(*args, **kwargs)
-        except BinanceError as e:
-            pprint.pprint(e.response)
-
-    return wrapper
-
-
-@error_handler
-async def binance_rest_without_credentials_new_market_order_with_quote_order_qty() -> None:
-    async with BinanceRESTWithoutCredentials() as rest:
-        res = await rest.new_order(
-            symbol="BTCUSDT",
-            side=BinanceOrderSideEnum.BUY,
-            order_type=BinanceOrderTypeEnum.MARKET,
-            quote_order_qty="10",
-            credentials=credentials,
-        )
-    pprint.pprint(res)
-
-
-@error_handler
-async def binance_rest_without_credentials_new_market_order_with_quantity() -> None:
-    async with BinanceRESTWithoutCredentials() as rest:
-        res = await rest.new_order(
-            symbol="BTCUSDT",
-            side=BinanceOrderSideEnum.BUY,
-            order_type=BinanceOrderTypeEnum.MARKET,
-            quantity="10",
-            credentials=credentials,
-        )
-    pprint.pprint(res)
-
-
-@error_handler
-async def binance_rest_without_credentials_new_limit_order() -> None:
-    async with BinanceRESTWithoutCredentials() as rest:
-        res = await rest.new_order(
-            symbol="BTCUSDT",
-            side=BinanceOrderSideEnum.BUY,
-            order_type=BinanceOrderTypeEnum.LIMIT,
-            quantity="0.00034",
-            price="40000",
-            time_in_force=BinanceTimeInForceEnum.GTC,
-            credentials=credentials,
-        )
-    pprint.pprint(res)
