@@ -6,7 +6,7 @@ import aiohttp
 from exapi.base.rest import BaseExchangeREST
 from exapi.exchanges.ftx.exceptions import FTXError, FTXInvalidMarketError
 from exapi.exchanges.ftx.models import FTXCredentials
-from exapi.exchanges.ftx.typedefs import FTXMarket
+from exapi.exchanges.ftx.typedefs import FTXMarket, FTXOrderbook
 from exapi.models import Request, Response
 from exapi.typedefs import HeadersType
 
@@ -71,6 +71,38 @@ class FTXRESTWithoutCredentials(BaseExchangeREST):
         request = Request(method="GET", base_url=self._base_url, path="/api/markets")
         response = await self._send_request(request)
         result: list[FTXMarket] = response
+        return result
+
+    async def get_orderbook(
+        self, market: str, depth: int | None = None
+    ) -> FTXOrderbook:
+        """Returns orderbook for specific `market`.
+
+        Args:
+            market: symbol name.
+            depth: number of orders. Max 100, default 20.
+
+        Returns:
+            Orderbook
+
+        Raised:
+            FTXInvalidMarketError: will be raised if market does not exist.
+        """
+
+        params = {}
+        if depth is not None:
+            params["depth"] = depth
+
+        path = f"/api/markets/{market}/orderbook"
+        request = Request(
+            method="GET", base_url=self._base_url, path=path, params=params
+        )
+        response = await self._send_request(request)
+        # Convert list to tuple because list has always 2 elements.
+        response["asks"] = list(map(tuple, response["asks"]))
+        response["bids"] = list(map(tuple, response["bids"]))
+
+        result: FTXOrderbook = response
         return result
 
     async def _handle_response(
@@ -158,6 +190,24 @@ class FTXREST:
         """
 
         return await self._client.get_markets()
+
+    async def get_orderbook(
+        self, market: str, depth: int | None = None
+    ) -> FTXOrderbook:
+        """Returns orderbook for specific `market`.
+
+        Args:
+            market: symbol name.
+            depth: number of orders. Max 100, default 20.
+
+        Returns:
+            Orderbook
+
+        Raised:
+            FTXInvalidMarketError: will be raised if market does not exist.
+        """
+
+        return await self._client.get_orderbook(market, depth)
 
     async def close(self) -> None:
         """Closes session."""
