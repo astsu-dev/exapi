@@ -26,3 +26,8 @@ class FTXMarket(TypedDict):
     restricted: bool
     volumeUsd24h: float
     largeOrderThreshold: float
+
+
+class FTXOrderbook(TypedDict):
+    asks: list[tuple[float, float]]
+    bids: list[tuple[float, float]]
