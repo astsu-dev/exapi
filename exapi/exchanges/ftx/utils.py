@@ -32,7 +32,9 @@ def sign_request(
     method = request.method
     path = request.path
     body_str = json.dumps(body) if body is not None else ""
-    signature = create_signature(credentials.api_secret, timestamp, method, path, body_str)
+    signature = create_signature(
+        credentials.api_secret, timestamp, method, path, body_str
+    )
 
     headers: Mapping[str, str] = request.headers or {}
     headers = {
