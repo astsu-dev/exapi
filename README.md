@@ -18,7 +18,7 @@
 
 - [x] Get markets
 - [ ] Get single market
-- [ ] Get order book
+- [x] Get order book
 
 ### Account
 
