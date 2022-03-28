@@ -9,8 +9,8 @@ from exapi.exchanges.binance.exceptions import (
     BinanceAuthError,
     BinanceBadPrecisionError,
     BinanceBadRecvWindowError,
-    BinanceInvalidSymbolError,
     BinanceError,
+    BinanceInvalidSymbolError,
 )
 from exapi.exchanges.binance.models import BinanceCredentials
 from exapi.exchanges.binance.typedefs import (
@@ -19,17 +19,14 @@ from exapi.exchanges.binance.typedefs import (
     BinanceExchangeInfo,
     BinanceFullOrderResponse,
     BinanceOrderResponseType,
+    BinanceOrderSide,
     BinanceOrderType,
     BinanceResultOrderResponse,
     BinanceSymbolTicker,
-    BinanceOrderSide,
     BinanceTimeInForce,
 )
-from exapi.models import (
-    Request,
-    Response,
-)
 from exapi.exchanges.binance.utils import sign_request
+from exapi.models import Request, Response
 from exapi.typedefs import HeadersType
 
 
@@ -1101,12 +1098,14 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
         Args:
             response: response object.
 
-        Raises:
-            InvalidSymbolError: will be raised if symbol does not exist on exchange.
-            ExchangeError: will be raised if error is unknown.
-
         Returns:
             Response with json body.
+
+        Raises:
+            BinanceAuthError
+            BinanceInvalidSymbolError
+            BinanceBadPrecisionError
+            BinanceBadRecvWindowError
         """
 
         result = await response.json(encoding="utf-8")

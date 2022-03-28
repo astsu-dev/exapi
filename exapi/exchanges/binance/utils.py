@@ -3,9 +3,9 @@ import hmac
 from typing import Mapping, OrderedDict
 from urllib.parse import urlencode
 
+from exapi.exchanges.binance.models import BinanceCredentials
 from exapi.models import Request
 from exapi.utils import get_timestamp
-from exapi.exchanges.binance.models import BinanceCredentials
 
 
 def sign_request(

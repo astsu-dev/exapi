@@ -1,7 +1,8 @@
 import os
 
-from dotenv import load_dotenv
 import pytest
+from dotenv import load_dotenv
+
 from exapi.exchanges.binance.models import BinanceCredentials
 
 load_dotenv()
