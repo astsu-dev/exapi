@@ -38,6 +38,19 @@ class BybitSymbolTicker(TypedDict):
     time: int
 
 
+class BybitAccountBalance(TypedDict):
+    coin: str
+    coinId: str
+    coinName: str
+    total: str
+    free: str
+    locked: str
+
+
+class BybitWalletBalance(TypedDict):
+    balances: list[BybitAccountBalance]
+
+
 class BybitOrder(TypedDict):
     accountId: str
     symbol: str
