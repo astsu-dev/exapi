@@ -2,6 +2,8 @@
 
 ## Quick Start
 
+Get symbol ticker from Binance exchange:
+
 ```python
 >>> import asyncio
 >>> from exapi.exchanges.binance.rest import BinanceRESTWithoutCredentials
@@ -77,7 +79,6 @@
 #### Markets
 
 - [x] Get markets (`get_markets`)
-- [ ] Get single market
 - [x] Get orderbook (`get_orderbook`)
 
 #### Account
