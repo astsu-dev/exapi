@@ -6,7 +6,8 @@ import aiohttp
 from exapi.base.rest import BaseExchangeREST
 from exapi.exchanges.bybit.exceptions import BybitError, BybitInvalidSymbolError
 from exapi.exchanges.bybit.models import BybitCredentials
-from exapi.exchanges.bybit.typedefs import BybitSymbolInfo
+from exapi.exchanges.bybit.typedefs import BybitSymbolInfo, BybitWalletBalances
+from exapi.exchanges.bybit.utils import sign_request
 from exapi.models import Request, Response
 from exapi.typedefs import HeadersType
 
@@ -29,6 +30,7 @@ class BybitRESTWithoutCredentials(BaseExchangeREST):
     async def get_symbols(self) -> list[BybitSymbolInfo]:
         """Returns list of symbols.
 
+        ```python
         >>> import asyncio
         >>> from exapi.exchanges.bybit.rest import BybitRESTWithoutCredentials
         >>> from exapi.exchanges.bybit.typedefs import BybitSymbolInfo
@@ -68,6 +70,7 @@ class BybitRESTWithoutCredentials(BaseExchangeREST):
                 "category": 1
             }
         ]
+        ```
 
         Returns:
             List of symbols.
@@ -79,6 +82,51 @@ class BybitRESTWithoutCredentials(BaseExchangeREST):
         response = await self._send_request(request)
 
         result: list[BybitSymbolInfo] = response
+        return result
+
+    async def get_balances(self, credentials: BybitCredentials) -> BybitWalletBalances:
+        """Returns wallet balances.
+
+        ```python
+        >>> import asyncio
+        >>> from exapi.exchanges.bybit.models import BybitCredentials
+        >>> from exapi.exchanges.bybit.rest import BybitRESTWithoutCredentials
+        >>> from exapi.exchanges.bybit.typedefs import BybitWalletBalances
+        >>>
+        >>> async def get_balances() -> BybitWalletBalances:
+        ...     credentials = BybitCredentials("API_KEY", "API_SECRET")
+        ...     async with BybitRESTWithoutCredentials() as rest:
+        ...         return await rest.get_balances(credentials)
+        ...
+        >>> asyncio.run(get_balances())
+        {
+            "balances": [
+                {
+                    "coin": "USDT",
+                    "coinId": "USDT",
+                    "coinName": "USDT",
+                    "total": "10",
+                    "free": "10",
+                    "locked": "0"
+                }
+            ]
+        }
+        ```
+
+        Args:
+            credentials: api keys.
+
+        Returns:
+            Wallet balances.
+        """
+
+        request = Request(
+            method="GET", base_url=self._base_url, path="/spot/v1/account"
+        )
+        request = sign_request(request, credentials)
+        response = await self._send_request(request)
+
+        result: BybitWalletBalances = response
         return result
 
     async def _handle_response(
@@ -129,6 +177,7 @@ class BybitREST:
     async def get_symbols(self) -> list[BybitSymbolInfo]:
         """Returns list of symbols.
 
+        ```python
         >>> import asyncio
         >>> from exapi.exchanges.bybit.rest import BybitREST
         >>> from exapi.exchanges.bybit.typedefs import BybitSymbolInfo
@@ -168,12 +217,46 @@ class BybitREST:
                 "category": 1
             }
         ]
+        ```
 
         Returns:
             List of symbols.
         """
 
         return await self._client.get_symbols()
+
+    async def get_balances(self) -> BybitWalletBalances:
+        """Returns wallet balances.
+
+        ```python
+        >>> import asyncio
+        >>> from exapi.exchanges.bybit.rest import BybitREST
+        >>> from exapi.exchanges.bybit.typedefs import BybitWalletBalances
+        >>>
+        >>> async def get_balances() -> BybitWalletBalances:
+        ...     async with BybitREST("API_KEY", "API_SECRET") as rest:
+        ...         return await rest.get_balances()
+        ...
+        >>> asyncio.run(get_balances())
+        {
+            "balances": [
+                {
+                    "coin": "USDT",
+                    "coinId": "USDT",
+                    "coinName": "USDT",
+                    "total": "10",
+                    "free": "10",
+                    "locked": "0"
+                }
+            ]
+        }
+        ```
+
+        Returns:
+            Wallet balances.
+        """
+
+        return await self._client.get_balances(self._credentials)
 
     async def close(self) -> None:
         """Closes session."""
