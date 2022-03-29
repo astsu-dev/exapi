@@ -4,21 +4,36 @@
 
 ### Market data
 
-- [x] Get symbol order book ticker
-- [x] Get exchange information
+- [x] Get symbol order book ticker (`get_ticker`)
+- [x] Get exchange information (`get_exchange_info`)
 
 ### Spot Account/Trade
 
-- [x] Get account information
-- [x] Place new order
+- [x] Get account information (`get_account_info`)
+- [x] Place order (`new_order`)
+
+## Bybit
+
+### Market data
+
+- [x] Get symbols (`get_symbols`)
+- [ ] Get ticker (`get_ticker`)
+
+### Account data
+
+- [ ] Place order (`new_order`)
+
+### Wallet data
+
+- [ ] Get wallet balance (`get_balances`)
 
 ## FTX
 
 ### Markets
 
-- [x] Get markets
+- [x] Get markets (`get_markets`)
 - [ ] Get single market
-- [x] Get order book
+- [x] Get orderbook (`get_orderbook`)
 
 ### Account
 
@@ -26,4 +41,4 @@
 
 ### Orders
 
-- [ ] Place new order
+- [ ] Place order
