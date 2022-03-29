@@ -1,6 +1,6 @@
 import pytest
-from exapi.exchanges.ftx.exceptions import FTXInvalidMarketError
 
+from exapi.exchanges.ftx.exceptions import FTXInvalidMarketError
 from exapi.exchanges.ftx.rest import FTXREST, FTXRESTWithoutCredentials
 
 
