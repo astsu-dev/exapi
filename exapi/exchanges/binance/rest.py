@@ -58,6 +58,7 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
     ) -> BinanceSymbolTicker | list[BinanceSymbolTicker]:
         """Returns `symbol` order book ticker - best ask and bid orders.
 
+        ```pycon
         >>> import asyncio
         >>> from exapi.exchanges.binance.rest import BinanceRESTWithoutCredentials
         >>> from exapi.exchanges.binance.typedefs import BinanceSymbolTicker
@@ -96,6 +97,7 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
                 "askQty": "1000.00000000"
             }
         ]
+        ```
 
         Args:
             symbol: format is "BTCUSDT". If None will be returned tickers for all symbols.
@@ -145,6 +147,7 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
     ) -> BinanceExchangeInfo:
         """Returns exchange info.
 
+        ```pycon
         >>> import asyncio
         >>> from exapi.exchanges.binance.rest import BinanceRESTWithoutCredentials
         >>> from exapi.exchanges.binance.typedefs import BinanceExchangeInfo
@@ -412,6 +415,7 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
                 }
             ]
         }
+        ```
 
         Args:
             symbol: if provided will be returned exchange info with specific `symbol`.
@@ -455,6 +459,7 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
     ) -> BinanceAccountInfo:
         """Returns account info - balances, fees, permissions.
 
+        ```pycon
         >>> import asyncio
         >>> from exapi.exchanges.binance.rest import BinanceRESTWithoutCredentials
         >>> from exapi.exchanges.binance.typedefs import BinanceAccountInfo
@@ -491,6 +496,7 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
                 "SPOT"
             ]
         }
+        ```
 
         Args:
             credentials: api keys.
@@ -894,6 +900,7 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
     ) -> BinanceAckOrderResponse | BinanceResultOrderResponse | BinanceFullOrderResponse:
         """Creates new order.
 
+        ```pycon
         >>> import asyncio
         >>> from exapi.exchanges.binance.rest import BinanceRESTWithoutCredentials
         >>> from exapi.exchanges.binance.typedefs import BinanceFullOrderResponse, BinanceOrderResponseType
@@ -959,6 +966,7 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
                 }
             ]
         }
+        ```
 
         Args:
             symbol: example: "BTCUSDT".
@@ -1177,6 +1185,7 @@ class BinanceREST:
     ) -> BinanceSymbolTicker | list[BinanceSymbolTicker]:
         """Returns `symbol` order book ticker - best ask and bid orders.
 
+        ```pycon
         >>> import asyncio
         >>> from exapi.exchanges.binance.rest import BinanceREST
         >>> from exapi.exchanges.binance.typedefs import BinanceSymbolTicker
@@ -1215,6 +1224,7 @@ class BinanceREST:
                 "askQty": "1000.00000000"
             }
         ]
+        ```
 
         Args:
             symbol: format is "BTCUSDT". If None will be returned tickers for all symbols.
@@ -1251,6 +1261,7 @@ class BinanceREST:
     ) -> BinanceExchangeInfo:
         """Returns exchange info.
 
+        ```pycon
         >>> import asyncio
         >>> from exapi.exchanges.binance.rest import BinanceREST
         >>> from exapi.exchanges.binance.typedefs import BinanceExchangeInfo
@@ -1518,6 +1529,7 @@ class BinanceREST:
                 }
             ]
         }
+        ```
 
         Args:
             symbol: if provided will be returned exchange info with specific `symbol`.
@@ -1541,6 +1553,7 @@ class BinanceREST:
     ) -> BinanceAccountInfo:
         """Returns account info - balances, fees, permissions.
 
+        ```pycon
         >>> import asyncio
         >>> from exapi.exchanges.binance.rest import BinanceREST
         >>> from exapi.exchanges.binance.typedefs import BinanceAccountInfo
@@ -1576,6 +1589,7 @@ class BinanceREST:
                 "SPOT"
             ]
         }
+        ```
 
         Args:
             recv_window: the value cannot be greater than 60000.
@@ -1949,6 +1963,7 @@ class BinanceREST:
     ) -> BinanceAckOrderResponse | BinanceResultOrderResponse | BinanceFullOrderResponse:
         """Creates new order.
 
+        ```pycon
         >>> import asyncio
         >>> from exapi.exchanges.binance.rest import BinanceREST
         >>> from exapi.exchanges.binance.typedefs import BinanceFullOrderResponse, BinanceOrderResponseType
@@ -2012,6 +2027,7 @@ class BinanceREST:
                 }
             ]
         }
+        ```
 
         Args:
             symbol: example: "BTCUSDT".

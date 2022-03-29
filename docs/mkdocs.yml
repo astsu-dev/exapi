@@ -1,0 +1,23 @@
+site_name: exapi
+repo_name: astsu-dev/exapi
+repo_url: https://github.com/astsu-dev/exapi
+theme: material
+
+nav:
+  - "Quick Start": "index.md"
+  - "Code Reference":
+      - "code-reference/binance.md"
+
+markdown_extensions:
+  - pymdownx.highlight:
+      use_pygments: true
+  - pymdownx.superfences
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          setup_commands:
+            - import sys
+            - sys.path.append("../")
