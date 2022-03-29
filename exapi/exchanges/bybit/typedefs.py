@@ -47,7 +47,7 @@ class BybitAccountBalance(TypedDict):
     locked: str
 
 
-class BybitWalletBalance(TypedDict):
+class BybitWalletBalances(TypedDict):
     balances: list[BybitAccountBalance]
 
 
