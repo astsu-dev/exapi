@@ -1,15 +1,15 @@
-class BybitOrderSide:
+class BybitOrderSideEnum:
     BUY = "Buy"
     SELL = "Sell"
 
 
-class BybitOrderType:
+class BybitOrderTypeEnum:
     LIMIT = "LIMIT"
     MARKET = "MARKET"
     LIMIT_MAKER = "LIMIT_MAKER"
 
 
-class BybitOrderStatus:
+class BybitOrderStatusEnum:
     NEW = "NEW"
     PARTIALLY_FILLED = "PARTIALLY_FILLED"
     FILLED = "FILLED"
@@ -19,7 +19,7 @@ class BybitOrderStatus:
     REJECTED = "REJECTED"
 
 
-class BybitTimeInForce:
+class BybitTimeInForceEnum:
     GTC = "GTC"
     FOK = "FOK"
     IOC = "IOC"
