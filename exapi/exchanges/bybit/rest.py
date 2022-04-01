@@ -1,12 +1,31 @@
 from types import TracebackType
-from typing import Any, DefaultDict, Type, cast
+from typing import Any, DefaultDict, Literal, Type, cast, overload
 
 import aiohttp
 
 from exapi.base.rest import BaseExchangeREST
-from exapi.exchanges.bybit.exceptions import BybitError, BybitInvalidSymbolError
+from exapi.exchanges.bybit.exceptions import (
+    BybitAuthError,
+    BybitError,
+    BybitInsufficientBalanceError,
+    BybitInvalidParameterError,
+    BybitInvalidPriceDecimalsError,
+    BybitInvalidQuantityDecimalsError,
+    BybitInvalidSymbolError,
+    BybitTooHighPriceError,
+    BybitTooHighQuantityError,
+    BybitTooLowPriceError,
+    BybitTooLowQuantityError,
+)
 from exapi.exchanges.bybit.models import BybitCredentials
-from exapi.exchanges.bybit.typedefs import BybitSymbolInfo, BybitWalletBalances
+from exapi.exchanges.bybit.typedefs import (
+    BybitOrder,
+    BybitOrderSide,
+    BybitOrderType,
+    BybitSymbolInfo,
+    BybitTimeInForce,
+    BybitWalletBalances,
+)
 from exapi.exchanges.bybit.utils import sign_request
 from exapi.models import Request, Response
 from exapi.typedefs import HeadersType
@@ -129,6 +148,156 @@ class BybitRESTWithoutCredentials(BaseExchangeREST):
         result: BybitWalletBalances = response
         return result
 
+    @overload
+    async def new_order(
+        self,
+        *,
+        symbol: str,
+        side: BybitOrderSide,
+        order_type: Literal["MARKET"],
+        quantity: str,
+        price: None = None,
+        time_in_force: None = None,
+        order_link_id: str | None = None,
+        credentials: BybitCredentials,
+    ) -> BybitOrder:
+        ...
+
+    @overload
+    async def new_order(
+        self,
+        *,
+        symbol: str,
+        side: BybitOrderSide,
+        order_type: Literal["LIMIT"],
+        quantity: str,
+        price: str,
+        time_in_force: BybitTimeInForce | None = None,
+        order_link_id: str | None = None,
+        credentials: BybitCredentials,
+    ) -> BybitOrder:
+        ...
+
+    @overload
+    async def new_order(
+        self,
+        *,
+        symbol: str,
+        side: BybitOrderSide,
+        order_type: Literal["LIMIT_MAKER"],
+        quantity: str,
+        price: str,
+        time_in_force: None = None,
+        order_link_id: str | None = None,
+        credentials: BybitCredentials,
+    ) -> BybitOrder:
+        ...
+
+    async def new_order(
+        self,
+        *,
+        symbol: str,
+        side: BybitOrderSide,
+        order_type: BybitOrderType,
+        quantity: str,
+        price: str | None = None,
+        time_in_force: BybitTimeInForce | None = None,
+        order_link_id: str | None = None,
+        credentials: BybitCredentials,
+    ) -> BybitOrder:
+        """Places a new order.
+
+        ```python
+        >>> import asyncio
+        >>> from exapi.exchanges.bybit.enums import (
+        ...     BybitOrderTypeEnum, BybitOrderSideEnum, BybitTimeInForceEnum
+        ... )
+        >>> from exapi.exchanges.bybit.rest import BybitRESTWithoutCredentials
+        >>> from exapi.exchanges.bybit.models import BybitCredentials
+        >>> from exapi.exchanges.bybit.typedefs import BybitOrder
+        >>>
+        >>> async def new_order() -> BybitOrder:
+        ...     credentials = BybitCredentials("API_KEY", "API_SECRET")
+        ...     async with BybitRESTWithoutCredentials() as rest:
+        ...         return await rest.new_order(
+        ...             symbol="BTCUSDT",
+        ...             side=BybitOrderSideEnum.BUY,
+        ...             order_type=BybitOrderTypeEnum.LIMIT,
+        ...             quantity="10",
+        ...             price="20000",
+        ...             time_in_force=BybitTimeInForceEnum.GTC,
+        ...             order_link_id="162073788655749",
+        ...             credentials=credentials
+        ...         )
+        ...
+        >>> asyncio.run(new_order())
+        {
+                "accountId": "1",
+                "symbol": "ETHUSDT",
+                "symbolName": "ETHUSDT",
+                "orderLinkId": "162073788655749",
+                "orderId": "889208273689997824",
+                "transactTime": "1620737886573",
+                "price": "20000",
+                "origQty": "10",
+                "executedQty": "0",
+                "status": "NEW",
+                "timeInForce": "GTC",
+                "type": "LIMIT",
+                "side": "Buy"
+        }
+        ```
+
+        Args:
+            symbol: symbol. Example: "BTCUSDT".
+            side: order side.
+            order_type: order type.
+            quantity: order quantity.
+                For market orders: when `side` is "Buy", this is in the quote currency.
+                Otherwise, `quantity` is in the base currency.
+                For example, on BTCUSDT a `Buy` order is in USDT, otherwise it's in BTC.
+                For limit orders, the `quantity` is always in the base currency.)
+            price: order price. When the type field is MARKET, the price field is optional.
+                When the type field is LIMIT or LIMIT_MAKER, the price field is required
+            time_in_force: time in force.
+            order_link_id: user generated order id.
+            credentials: api keys.
+
+        Returns:
+            Order.
+        """
+
+        data: dict[str, str] = {
+            "symbol": symbol,
+            "side": side,
+            "type": order_type,
+            "qty": quantity,
+        }
+        if price is not None:
+            data["price"] = price
+        if time_in_force is not None:
+            data["timeInForce"] = time_in_force
+        if order_link_id is not None:
+            data["orderLinkId"] = order_link_id
+
+        request = Request(
+            method="POST", base_url=self._base_url, path="/spot/v1/order", data=data
+        )
+        request = sign_request(request, credentials)
+
+        try:
+            response = await self._send_request(request)
+        except BybitInvalidParameterError as e:
+            if e.response.body["ret_msg"] in (
+                "Data sent for paramter 'symbol' is not valid.",
+                "Data sent for parameter 'symbol' is not valid.",
+            ):
+                raise BybitInvalidSymbolError(e.request, e.response)
+            raise
+
+        result: BybitOrder = response
+        return result
+
     async def _handle_response(
         self, request: Request, response: aiohttp.ClientResponse
     ) -> Any:
@@ -141,7 +310,23 @@ class BybitRESTWithoutCredentials(BaseExchangeREST):
         codes_to_exceptions: DefaultDict[int, Type[BybitError]] = DefaultDict(
             lambda: BybitError
         )
-        codes_to_exceptions.update({-100011: BybitInvalidSymbolError})
+        codes_to_exceptions.update(
+            {
+                -1002: BybitAuthError,
+                -1022: BybitAuthError,
+                -2014: BybitAuthError,
+                -2015: BybitAuthError,
+                -1130: BybitInvalidParameterError,
+                -1131: BybitInsufficientBalanceError,
+                -1132: BybitTooHighPriceError,
+                -1133: BybitTooLowPriceError,
+                -1134: BybitInvalidPriceDecimalsError,
+                -1135: BybitTooHighQuantityError,
+                -1136: BybitTooLowQuantityError,
+                -1137: BybitInvalidQuantityDecimalsError,
+                -100011: BybitInvalidSymbolError,
+            }
+        )
         Error = codes_to_exceptions[code]
 
         response_info = Response(
@@ -257,6 +442,128 @@ class BybitREST:
         """
 
         return await self._client.get_balances(self._credentials)
+
+    @overload
+    async def new_order(
+        self,
+        *,
+        symbol: str,
+        side: BybitOrderSide,
+        order_type: Literal["MARKET"],
+        quantity: str,
+        price: None = None,
+        time_in_force: None = None,
+        order_link_id: str | None = None,
+    ) -> BybitOrder:
+        ...
+
+    @overload
+    async def new_order(
+        self,
+        *,
+        symbol: str,
+        side: BybitOrderSide,
+        order_type: Literal["LIMIT"],
+        quantity: str,
+        price: str,
+        time_in_force: BybitTimeInForce | None = None,
+        order_link_id: str | None = None,
+    ) -> BybitOrder:
+        ...
+
+    @overload
+    async def new_order(
+        self,
+        *,
+        symbol: str,
+        side: BybitOrderSide,
+        order_type: Literal["LIMIT_MAKER"],
+        quantity: str,
+        price: str,
+        time_in_force: None = None,
+        order_link_id: str | None = None,
+    ) -> BybitOrder:
+        ...
+
+    async def new_order(
+        self,
+        *,
+        symbol: str,
+        side: BybitOrderSide,
+        order_type: BybitOrderType,
+        quantity: str,
+        price: str | None = None,
+        time_in_force: BybitTimeInForce | None = None,
+        order_link_id: str | None = None,
+    ) -> BybitOrder:
+        """Places a new order.
+
+        ```python
+        >>> import asyncio
+        >>> from exapi.exchanges.bybit.enums import (
+        ...     BybitOrderTypeEnum, BybitOrderSideEnum, BybitTimeInForceEnum
+        ... )
+        >>> from exapi.exchanges.bybit.rest import BybitREST
+        >>> from exapi.exchanges.bybit.typedefs import BybitOrder
+        >>>
+        >>> async def new_order() -> BybitOrder:
+        ...     async with BybitREST("API_KEY", "API_SECRET") as rest:
+        ...         return await rest.new_order(
+        ...             symbol="BTCUSDT",
+        ...             side=BybitOrderSideEnum.BUY,
+        ...             order_type=BybitOrderTypeEnum.LIMIT,
+        ...             quantity="10",
+        ...             price="20000",
+        ...             time_in_force=BybitTimeInForceEnum.GTC,
+        ...             order_link_id="162073788655749",
+        ...         )
+        ...
+        >>> asyncio.run(new_order())
+        {
+                "accountId": "1",
+                "symbol": "ETHUSDT",
+                "symbolName": "ETHUSDT",
+                "orderLinkId": "162073788655749",
+                "orderId": "889208273689997824",
+                "transactTime": "1620737886573",
+                "price": "20000",
+                "origQty": "10",
+                "executedQty": "0",
+                "status": "NEW",
+                "timeInForce": "GTC",
+                "type": "LIMIT",
+                "side": "Buy"
+        }
+        ```
+
+        Args:
+            symbol: symbol. Example: "BTCUSDT".
+            side: order side.
+            order_type: order type.
+            quantity: order quantity.
+                For market orders: when `side` is "Buy", this is in the quote currency.
+                Otherwise, `quantity` is in the base currency.
+                For example, on BTCUSDT a `Buy` order is in USDT, otherwise it's in BTC.
+                For limit orders, the `quantity` is always in the base currency.)
+            price: order price. When the type field is MARKET, the price field is optional.
+                When the type field is LIMIT or LIMIT_MAKER, the price field is required
+            time_in_force: time in force.
+            order_link_id: user generated order id.
+
+        Returns:
+            Order.
+        """
+
+        return await self._client.new_order(
+            symbol=symbol,
+            side=side,
+            order_type=order_type,  # type: ignore
+            quantity=quantity,
+            price=price,  # type: ignore
+            time_in_force=time_in_force,  # type: ignore
+            order_link_id=order_link_id,
+            credentials=self._credentials,
+        )
 
     async def close(self) -> None:
         """Closes session."""
