@@ -68,11 +68,11 @@ Get symbol ticker from Binance exchange:
 
 #### Account data
 
-- [ ] Place order (`new_order`)
+- [x] Place order (`new_order`)
 
 #### Wallet data
 
-- [ ] Get wallet balance (`get_balances`)
+- [x] Get wallet balance (`get_balances`)
 
 ### FTX
 
