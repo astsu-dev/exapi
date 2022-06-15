@@ -23,6 +23,7 @@ from exapi.exchanges.bybit.typedefs import (
     BybitOrderSide,
     BybitOrderType,
     BybitSymbolInfo,
+    BybitSymbolTicker,
     BybitTimeInForce,
     BybitWalletBalances,
 )
@@ -101,6 +102,81 @@ class BybitRESTWithoutCredentials(BaseExchangeREST):
         response = await self._send_request(request)
 
         result: list[BybitSymbolInfo] = response
+        return result
+
+    @overload
+    async def get_ticker(self, symbol: str) -> BybitSymbolTicker:
+        ...
+
+    @overload
+    async def get_ticker(self, symbol: None = None) -> list[BybitSymbolTicker]:
+        ...
+
+    async def get_ticker(
+        self, symbol: str | None = None
+    ) -> BybitSymbolTicker | list[BybitSymbolTicker]:
+        """
+        Returns symbol ticker. If `symbol` is not specified will be returned the tickers for all symbols.
+
+        Args:
+            symbol (str | None)
+
+        ```python
+        >>> import asyncio
+        >>> from exapi.exchanges.bybit.rest import BybitRESTWithoutCredentials
+        >>> from exapi.exchanges.bybit.typedefs import BybitSymbolTicker
+        >>>
+        >>> async def get_ticker(symbol: str | None = None) -> BybitSymbolTicker | list[BybitSymbolTicker]:
+        ...     async with BybitRESTWithoutCredentials() as rest:
+        ...         return await rest.get_ticker(symbol)
+        ...
+        >>> asyncio.run(get_ticker("BTCUSDT"))
+        {
+            "symbol": "BTCUSDT",
+            "bidPrice": "50005.12",
+            "bidQty": "394",
+            "askPrice": "50008",
+            "askQty": "0.8001",
+            "time": 1620919281808
+        }
+        >>> asyncio.run(get_ticker())
+        [
+            {
+                "symbol": "BTCUSDT",
+                "bidPrice": "50005.12",
+                "bidQty": "394",
+                "askPrice": "50008",
+                "askQty": "0.8001",
+                "time": 1620919281808
+            },
+            {
+                "symbol": "ETHUSDT",
+                "bidPrice": "2100",
+                "bidQty": "394",
+                "askPrice": "50008",
+                "askQty": "0.8001",
+                "time": 1620919281808
+            },
+        ]
+        ```
+
+        Returns:
+            Symbol ticker or all symbol tickers.
+        """
+
+        if symbol is not None:
+            params = {"symbol": symbol}
+        else:
+            params = {}
+        request = Request(
+            method="GET",
+            base_url=self._base_url,
+            path="/spot/quote/v1/ticker/book_ticker",
+            params=params,
+        )
+        response = await self._send_request(request)
+
+        result: BybitSymbolTicker | list[BybitSymbolTicker] = response
         return result
 
     async def get_balances(self, credentials: BybitCredentials) -> BybitWalletBalances:
@@ -324,6 +400,8 @@ class BybitRESTWithoutCredentials(BaseExchangeREST):
                 -1135: BybitTooHighQuantityError,
                 -1136: BybitTooLowQuantityError,
                 -1137: BybitInvalidQuantityDecimalsError,
+                -1121: BybitInvalidSymbolError,
+                -100010: BybitInvalidSymbolError,
                 -100011: BybitInvalidSymbolError,
             }
         )
@@ -409,6 +487,60 @@ class BybitREST:
         """
 
         return await self._client.get_symbols()
+
+    @overload
+    async def get_ticker(self, symbol: str) -> BybitSymbolTicker:
+        ...
+
+    @overload
+    async def get_ticker(self, symbol: None) -> list[BybitSymbolTicker]:
+        ...
+
+    async def get_ticker(
+        self, symbol: str | None = None
+    ) -> BybitSymbolTicker | list[BybitSymbolTicker]:
+        """
+        ```python
+        >>> import asyncio
+        >>> from exapi.exchanges.bybit.rest import BybitREST
+        >>> from exapi.exchanges.bybit.typedefs import BybitSymbolTicker
+        >>>
+        >>> async def get_ticker(symbol: str | None = None) -> BybitSymbolTicker | list[BybitSymbolTicker]:
+        ...     async with BybitREST("", "") as rest:
+        ...         return await rest.get_ticker(symbol)
+        ...
+        >>> asyncio.run(get_ticker("BTCUSDT"))
+        {
+            "symbol": "BTCUSDT",
+            "bidPrice": "50005.12",
+            "bidQty": "394",
+            "askPrice": "50008",
+            "askQty": "0.8001",
+            "time": 1620919281808
+        }
+        >>> asyncio.run(get_ticker())
+        [
+            {
+                "symbol": "BTCUSDT",
+                "bidPrice": "50005.12",
+                "bidQty": "394",
+                "askPrice": "50008",
+                "askQty": "0.8001",
+                "time": 1620919281808
+            },
+            {
+                "symbol": "ETHUSDT",
+                "bidPrice": "2100",
+                "bidQty": "394",
+                "askPrice": "50008",
+                "askQty": "0.8001",
+                "time": 1620919281808
+            },
+        ]
+        ```
+        """
+
+        return await self._client.get_ticker(symbol)
 
     async def get_balances(self) -> BybitWalletBalances:
         """Returns wallet balances.

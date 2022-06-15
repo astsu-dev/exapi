@@ -5,7 +5,7 @@ class BybitError(ExchangeError):
     """Will be raised when response is not successful."""
 
     def __str__(self) -> str:
-        return "Bybit error."
+        return f"Bybit error: {self.response}"
 
 
 class BybitInvalidSymbolError(BybitError):
