@@ -5,32 +5,32 @@ class BinanceError(ExchangeError):
     "Base error for binance rest api."
 
     def __str__(self) -> str:
-        return "Binance exchange error."
+        return f"Binance error: {self.msg}"
 
 
 class BinanceInvalidSymbolError(BinanceError):
     """Will be raised when symbol does not exist on exchange."""
 
     def __str__(self) -> str:
-        return "Invalid symbol."
+        return f"Invalid symbol. {self.msg}"
 
 
 class BinanceAuthError(BinanceError):
     """Will be raised when account api keys are not valid."""
 
     def __str__(self) -> str:
-        return "Invalid api keys."
+        return f"Invalid api keys. {self.msg}"
 
 
 class BinanceBadPrecisionError(BinanceError):
     """Will be raised when precision is over the maximum defined for this asset."""
 
     def __str__(self) -> str:
-        return "Precision is over the maximum defined for this asset."
+        return f"Precision is over the maximum defined for this asset. {self.msg}"
 
 
 class BinanceBadRecvWindowError(BinanceError):
     """Will be raised when recv window is not valid."""
 
     def __str__(self) -> str:
-        return "Recv window must be less than 60000."
+        return f"Recv window must be less than 60000. {self.msg}"

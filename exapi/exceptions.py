@@ -14,12 +14,13 @@ class ExchangeError(RESTError):
     Can will be raised if the error from exchange is unknown.
     """
 
-    def __init__(self, request: Request, response: Response) -> None:
+    def __init__(self, request: Request, response: Response, msg: str = "") -> None:
         super().__init__(request)
         self.response = response
+        self.msg = msg
 
     def __str__(self) -> str:
-        return f"Exchange error."
+        return f"Exchange error. {self.msg}"
 
 
 class RESTNetworkError(RESTError):

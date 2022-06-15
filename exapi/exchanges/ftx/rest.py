@@ -120,9 +120,10 @@ class FTXRESTWithoutCredentials(BaseExchangeREST):
         )
 
         error: str = result["error"].lower()
+        msg: str = result["error"]
         if error.startswith("no such market"):
-            raise FTXInvalidMarketError(request=request, response=response_info)
-        raise FTXError(request=request, response=response_info)
+            raise FTXInvalidMarketError(request=request, response=response_info, msg=msg)
+        raise FTXError(request=request, response=response_info, msg=msg)
 
 
 class FTXREST:

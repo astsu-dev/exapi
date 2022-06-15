@@ -413,7 +413,8 @@ class BybitRESTWithoutCredentials(BaseExchangeREST):
             body=result,
         )
 
-        raise Error(request=request, response=response_info)
+        msg: str = result["ret_msg"]
+        raise Error(request=request, response=response_info, msg=msg)
 
 
 class BybitREST:

@@ -1134,6 +1134,8 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
             {
                 -1002: BinanceAuthError,
                 -1022: BinanceAuthError,
+                -2014: BinanceAuthError,
+                -2015: BinanceAuthError,
                 -1111: BinanceBadPrecisionError,
                 -1121: BinanceInvalidSymbolError,
                 -1131: BinanceBadRecvWindowError,
@@ -1141,8 +1143,9 @@ class BinanceRESTWithoutCredentials(BaseExchangeREST):
         )
 
         code: int = result["code"]
+        msg: str = result["msg"]
         Error = codes_to_exceptions[code]
-        raise Error(request=request, response=response_info)
+        raise Error(request=request, response=response_info, msg=msg)
 
     async def _send_private_request(
         self, request: Request, credentials: BinanceCredentials
